@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route("/evaluate-policy", methods=["POST"])
 def evaluate_policy():
@@ -24,19 +24,17 @@ def evaluate_policy():
             "End with an overall score out of 5."
         )
 
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": policy_text}
-        ]
-
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
-            messages=messages,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": policy_text}
+            ],
             max_tokens=1000,
-            temperature=0.3
+            temperature=0.3,
         )
 
-        result = response.choices[0].message["content"]
+        result = response.choices[0].message.content
         return jsonify({"result": result})
 
     except Exception as e:
@@ -44,4 +42,3 @@ def evaluate_policy():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
-
