@@ -24,15 +24,50 @@ def evaluate_policy():
             "End with an overall score out of 5."
         )
 
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": policy_text}
-            ],
-            max_tokens=1000,
-            temperature=0.3,
-        )
+       response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    temperature=0,  # less randomness
+    messages=[
+        {
+            "role": "system",
+            "content": (
+                "You are a healthcare policy evaluator. Always score the policy "
+                "on equity, cost, feasibility, stakeholder impact, and ethics. "
+                "Return results in JSON with each category, score (1-5), and explanation, "
+                "plus an overall_score."
+            )
+        },
+        {
+            "role": "user",
+            "content": f"Policy text:\n\n{policy_text}"
+        }
+    ],
+    response_format={
+        "type": "json_schema",
+        "json_schema": {
+            "name": "PolicyEvaluation",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "equity": {"type": "string"},
+                    "cost": {"type": "string"},
+                    "feasibility": {"type": "string"},
+                    "stakeholder_impact": {"type": "string"},
+                    "ethics": {"type": "string"},
+                    "overall_score": {"type": "string"}
+                },
+                "required": [
+                    "equity",
+                    "cost",
+                    "feasibility",
+                    "stakeholder_impact",
+                    "ethics",
+                    "overall_score"
+                ]
+            }
+        }
+    }
+)
 
         result = response.choices[0].message.content
         return jsonify({"result": result})
